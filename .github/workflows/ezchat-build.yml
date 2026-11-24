@@ -35,38 +35,46 @@ jobs:
         shell: cmd
 
     steps:
-      - name: Clean up preinstalled software.
+      - name: Free up disk space.
         shell: pwsh
         run: |
           $before = (Get-PSDrive C).Free / 1GB
-          function Remove-Tree([string]$path) {
-            if (Test-Path -LiteralPath $path) {
-              cmd /c rmdir /s /q "$path" 2> $null
-              Write-Host ("  removed {0} ({1:N1} GB free)" -f $path, ((Get-PSDrive C).Free / 1GB))
+
+          # robocopy 空目录镜像配合多线程，是 Windows 上删除海量小文件最快的方式，
+          # 远快于 rmdir /s /q 或 Remove-Item，避免清理步骤长时间卡住。
+          $empty = Join-Path $env:TEMP 'ezchat-empty'
+          New-Item -ItemType Directory -Force -Path $empty | Out-Null
+
+          function Remove-TreeFast([string]$path) {
+            if (-not (Test-Path -LiteralPath $path)) { return }
+            Write-Host ("  removing {0} ..." -f $path)
+            robocopy $empty $path /MIR /MT:16 /NFL /NDL /NJH /NJS /NP /R:0 /W:0 | Out-Null
+            if ($LASTEXITCODE -le 7) {
+              cmd /c rmdir /s /q "$path" 2>$null
             }
+            Write-Host ("  removed {0} ({1:N1} GB free)" -f $path, ((Get-PSDrive C).Free / 1GB))
           }
-          $fixed = @(
-            "C:\Android\android-sdk", "C:\Program Files\dotnet", "C:\Miniconda", "C:\msys64",
-            "$env:USERPROFILE\.cargo", "$env:USERPROFILE\.rustup", "$env:LOCALAPPDATA\Docker",
-            "C:\ProgramData\DockerDesktop", "C:\Program Files\PostgreSQL", "C:\PostgreSQL",
-            "C:\Program Files\MongoDB", "C:\Program Files\MySQL", "C:\ghcup", "C:\cabal",
-            "C:\Program Files\LLVM", "C:\vcpkg", "C:\tools\kotlinc", "C:\tools\php",
-            "C:\tools\Apache24", "C:\selenium", "C:\SeleniumWebDrivers", "C:\Program Files\R",
-            "C:\Program Files (x86)\R", "C:\ProgramData\Package Cache"
+
+          # Qt 构建约需 30 GB，腾到 40 GB 就提前结束，不去删无关目录浪费时间。
+          $targets = @(
+            "C:\Android\android-sdk",
+            "C:\Program Files\dotnet",
+            "C:\Miniconda",
+            "C:\msys64",
+            "$env:USERPROFILE\.cargo",
+            "$env:USERPROFILE\.rustup",
+            "C:\Program Files\LLVM",
+            "C:\vcpkg",
+            "$env:LOCALAPPDATA\Docker",
+            "C:\ProgramData\DockerDesktop"
           )
-          $patterns = @(
-            "C:\tools\nginx-*", "C:\rtools*",
-            "C:\Program Files\Google\Chrome*", "C:\Program Files (x86)\Google\Chrome*",
-            "C:\Program Files\Mozilla Firefox*",
-            "C:\hostedtoolcache\windows\Go*", "C:\hostedtoolcache\windows\Ruby*",
-            "C:\hostedtoolcache\windows\PyPy*", "C:\hostedtoolcache\windows\Java_*",
-            "C:\hostedtoolcache\windows\NuGet*"
-          )
-          foreach ($p in $fixed) { Remove-Tree $p }
-          foreach ($pattern in $patterns) {
-            Get-Item -Path $pattern -ErrorAction SilentlyContinue | ForEach-Object { Remove-Tree $_.FullName }
+          $targetGb = 40
+          $reached = $false
+          foreach ($p in $targets) {
+            if ((Get-PSDrive C).Free / 1GB -ge $targetGb) { $reached = $true; break }
+            Remove-TreeFast $p
           }
-          Get-ChildItem "C:\ProgramData\Microsoft\VisualStudio\Packages" -Exclude _Instances -ErrorAction SilentlyContinue | ForEach-Object { Remove-Tree $_.FullName }
+          if ($reached) { Write-Host ('target reached, skipped remaining directories.') }
           Write-Host ('{0:N1} GB -> {1:N1} GB free' -f $before, ((Get-PSDrive C).Free / 1GB))
 
       - name: Prepare directories.
