@@ -1,6 +1,6 @@
 name: Build EzChat.
 
-# Manually triggered build. Run from the Actions tab -> "Build EzChat." -> Run workflow.
+# Run manually from the Actions tab: "Build EzChat." -> "Run workflow".
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
           - Debug
           - Release
       upload_artifact:
-        description: Upload the built executable as an artifact
+        description: Upload the built executables as an artifact
         required: false
         default: true
         type: boolean
@@ -23,14 +23,31 @@ jobs:
     name: Windows x64 (${{ inputs.configuration }})
     runs-on: windows-latest
 
+    env:
+      UPLOAD_ARTIFACT: ${{ inputs.upload_artifact }}
+      ONLY_CACHE: "false"
+      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+      API_ID: ${{ secrets.TDESKTOP_API_ID }}
+      API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+
     defaults:
       run:
         shell: cmd
 
-    env:
-      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
-
     steps:
+      - name: Clean up preinstalled software.
+        shell: pwsh
+        run: |
+          $before = (Get-PSDrive C).Free / 1GB
+          Get-Service docker -ErrorAction SilentlyContinue | Stop-Service -ErrorAction SilentlyContinue
+          wsl --shutdown 2> $null
+          Remove-Item "C:\Android\android-sdk", "C:\Program Files\dotnet", "C:\Miniconda", "C:\msys64", "$env:USERPROFILE\.cargo", "$env:USERPROFILE\.rustup", "$env:LOCALAPPDATA\Docker", "C:\ProgramData\DockerDesktop", "C:\Program Files\PostgreSQL", "C:\PostgreSQL", "C:\Program Files\MongoDB", "C:\Program Files\MySQL" -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item "C:\ghcup", "C:\cabal", "C:\Program Files\LLVM", "C:\vcpkg", "C:\tools\kotlinc", "C:\tools\php", "C:\tools\Apache24", "C:\Program Files\Google\Chrome*", "C:\Program Files (x86)\Google\Chrome*", "C:\Program Files\Mozilla Firefox*", "C:\ProgramData\Package Cache" -Recurse -Force -ErrorAction SilentlyContinue
+          Get-ChildItem "C:\ProgramData\Microsoft\VisualStudio\Packages" -Exclude _Instances -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item C:\hostedtoolcache\windows\Go*, C:\hostedtoolcache\windows\Ruby*, C:\hostedtoolcache\windows\PyPy*, C:\hostedtoolcache\windows\Java_*, C:\hostedtoolcache\windows\NuGet* -Recurse -Force -ErrorAction SilentlyContinue
+          Write-Host ('{0:N1} GB -> {1:N1} GB free' -f $before, ((Get-PSDrive C).Free / 1GB))
+          exit 0
+
       - name: Prepare directories.
         run: |
           mkdir %userprofile%\TBuild\Libraries\win64
@@ -43,7 +60,7 @@ jobs:
         run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
 
       - name: Clone.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
@@ -54,44 +71,82 @@ jobs:
           DOCPATH=$TBUILD/$REPO_NAME/docs/building-win.md
           SDK="$(grep "SDK version" $DOCPATH | sed -r 's/.*\*\*(.*)\*\* SDK version.*/\1/')"
           echo "SDK=$SDK" >> $GITHUB_ENV
+          sed -i '/CMAKE_${lang}_FLAGS_DEBUG_INIT/s/${_Zi}//' "$PROGRAMFILES"/CMake/share/cmake*/Modules/Platform/Windows-MSVC.cmake
+          echo "$(sha256sum $TBUILD/$REPO_NAME/$PREPARE_PATH | awk '{ print $1 }')" >> CACHE_KEY.txt
+          echo "$SDK" >> CACHE_KEY.txt
+          echo "CACHE_KEY=$(sha256sum CACHE_KEY.txt | awk '{ print $1 }')" >> $GITHUB_ENV
           git config --global user.email "builder@example.com"
           git config --global user.name "Builder"
 
       - name: Native Tools Command Prompt.
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: Eden-CI/msvc-dev-cmd@master
         with:
           arch: x64
           sdk: ${{ env.SDK }}
+          toolset: 14.44
 
       - name: NuGet sources.
         run: |
           nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
           nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
 
+      - name: ThirdParty cache.
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ runner.OS }}-${{ runner.arch }}-third-party-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-${{ runner.arch }}-third-party-
+
+      - name: Libraries cache.
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.LibrariesPath }}
+          key: ${{ runner.OS }}-x64-libs-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-libs-
+
       - name: Libraries.
         run: |
           set CARGO_INCREMENTAL=0
           %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
 
-      - name: Configure.
+      - name: Read API credentials.
+        shell: bash
+        run: |
+          if [ -n "$API_ID" ] && [ -n "$API_HASH" ]; then
+            echo "TDESKTOP_BUILD_API=-D TDESKTOP_API_ID=$API_ID -D TDESKTOP_API_HASH=$API_HASH" >> $GITHUB_ENV
+          else
+            echo "TDESKTOP_BUILD_API=-D TDESKTOP_API_TEST=ON" >> $GITHUB_ENV
+          fi
+
+      - name: Free up some disk space.
+        shell: bash
+        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/src/wallet_engine/*' ')' -type f ')' -o -empty ')' -delete
+
+      - name: EzChat Desktop build.
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
           call configure.bat ^
-          -D TDESKTOP_API_TEST=ON ^
+          %TDESKTOP_BUILD_API% ^
           -D CMAKE_CONFIGURATION_TYPES=${{ inputs.configuration }} ^
+          -D CMAKE_COMPILE_WARNING_AS_ERROR=ON ^
+          -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= ^
           -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
           -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
 
-      - name: Build.
-        run: |
-          cd %TBUILD%\%REPO_NAME%\Telegram
           cmake --build ..\out --config ${{ inputs.configuration }} --parallel
+
+      - name: Move artifact.
+        if: ${{ inputs.upload_artifact }}
+        run: |
+          set OUT=%TBUILD%\%REPO_NAME%\out\${{ inputs.configuration }}
+          mkdir artifact
+          move %OUT%\EzChat.exe artifact\
+          move %OUT%\Updater.exe artifact\
 
       - name: Upload artifact.
         if: ${{ inputs.upload_artifact }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: EzChat-${{ inputs.configuration }}-x64
-          path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}\out\${{ inputs.configuration }}\EzChat.exe
-          if-no-files-found: error
+          path: artifact\
           retention-days: 7
