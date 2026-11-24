@@ -1,0 +1,97 @@
+name: Build EzChat.
+
+# Manually triggered build. Run from the Actions tab -> "Build EzChat." -> Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        required: true
+        default: Debug
+        type: choice
+        options:
+          - Debug
+          - Release
+      upload_artifact:
+        description: Upload the built executable as an artifact
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  windows:
+    name: Windows x64 (${{ inputs.configuration }})
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: cmd
+
+    env:
+      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+
+    steps:
+      - name: Prepare directories.
+        run: |
+          mkdir %userprofile%\TBuild\Libraries\win64
+          mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
+          echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
+          echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
+
+      - name: Get repository name.
+        shell: bash
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+
+      - name: Clone.
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
+
+      - name: First set up.
+        shell: bash
+        run: |
+          DOCPATH=$TBUILD/$REPO_NAME/docs/building-win.md
+          SDK="$(grep "SDK version" $DOCPATH | sed -r 's/.*\*\*(.*)\*\* SDK version.*/\1/')"
+          echo "SDK=$SDK" >> $GITHUB_ENV
+          git config --global user.email "builder@example.com"
+          git config --global user.name "Builder"
+
+      - name: Native Tools Command Prompt.
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          sdk: ${{ env.SDK }}
+
+      - name: NuGet sources.
+        run: |
+          nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
+          nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
+
+      - name: Libraries.
+        run: |
+          set CARGO_INCREMENTAL=0
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
+
+      - name: Configure.
+        run: |
+          cd %TBUILD%\%REPO_NAME%\Telegram
+          call configure.bat ^
+          -D TDESKTOP_API_TEST=ON ^
+          -D CMAKE_CONFIGURATION_TYPES=${{ inputs.configuration }} ^
+          -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
+
+      - name: Build.
+        run: |
+          cd %TBUILD%\%REPO_NAME%\Telegram
+          cmake --build ..\out --config ${{ inputs.configuration }} --parallel
+
+      - name: Upload artifact.
+        if: ${{ inputs.upload_artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: EzChat-${{ inputs.configuration }}-x64
+          path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}\out\${{ inputs.configuration }}\EzChat.exe
+          if-no-files-found: error
+          retention-days: 7
