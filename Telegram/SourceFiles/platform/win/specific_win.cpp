@@ -477,8 +477,8 @@ void AutostartToggle(bool enabled, Fn<void(bool)> done) {
 		silent,
 		FOLDERID_Startup,
 		L"-autostart",
-		L"Telegram autorun link.\n"
-		"You can disable autorun in Telegram settings.");
+		L"EzChat autorun link.\n"
+		"You can disable autorun in EzChat settings.");
 	if (done) {
 		done(enabled && success);
 	}
@@ -792,8 +792,8 @@ void psSendToMenu(bool send, bool silent) {
 		silent,
 		FOLDERID_SendTo,
 		L"--",
-		L"Telegram send to link.\n"
-		"You can disable send to menu item in Telegram settings.");
+		L"EzChat send to link.\n"
+		"You can disable send to menu item in EzChat settings.");
 }
 
 // Stub while we still support Windows 7.
