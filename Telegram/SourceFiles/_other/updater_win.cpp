@@ -414,7 +414,7 @@ bool update() {
 			} while (copyTries < 100);
 			if (!copyResult) {
 				const auto error = FormatUpdateError(
-					L"Failed to update Telegram :(\nCould not copy:\n"
+					L"Failed to update EzChat :(\nCould not copy:\n"
 						+ fname + L"\nTo:\n" + tofname,
 					errorCode);
 				writeLog(error);
@@ -467,16 +467,16 @@ void updateRegistry() {
 								SYSTEMTIME stLocalTime;
 								GetLocalTime(&stLocalTime);
 								RegSetValueEx(rkey, L"DisplayVersion", 0, REG_SZ, (const BYTE*)versionStr, ((versionLen / 2) + 1) * sizeof(WCHAR));
-								wsprintf(nameStr, L"Telegram Desktop");
+								wsprintf(nameStr, L"EzChat Desktop");
 								RegSetValueEx(rkey, L"DisplayName", 0, REG_SZ, (const BYTE*)nameStr, (wcslen(nameStr) + 1) * sizeof(WCHAR));
-								wsprintf(publisherStr, L"Telegram FZ-LLC");
+								wsprintf(publisherStr, L"EzChat");
 								RegSetValueEx(rkey, L"Publisher", 0, REG_SZ, (const BYTE*)publisherStr, (wcslen(publisherStr) + 1) * sizeof(WCHAR));
-								wsprintf(icongroupStr, L"Telegram Desktop");
+								wsprintf(icongroupStr, L"EzChat Desktop");
 								RegSetValueEx(rkey, L"Inno Setup: Icon Group", 0, REG_SZ, (const BYTE*)icongroupStr, (wcslen(icongroupStr) + 1) * sizeof(WCHAR));
 								wsprintf(dateStr, L"%04d%02d%02d", stLocalTime.wYear, stLocalTime.wMonth, stLocalTime.wDay);
 								RegSetValueEx(rkey, L"InstallDate", 0, REG_SZ, (const BYTE*)dateStr, (wcslen(dateStr) + 1) * sizeof(WCHAR));
 
-								const WCHAR *appURL = L"https://desktop.telegram.org";
+								const WCHAR *appURL = L"https://ezchat.im";
 								RegSetValueEx(rkey, L"HelpLink", 0, REG_SZ, (const BYTE*)appURL, (wcslen(appURL) + 1) * sizeof(WCHAR));
 								RegSetValueEx(rkey, L"URLInfoAbout", 0, REG_SZ, (const BYTE*)appURL, (wcslen(appURL) + 1) * sizeof(WCHAR));
 								RegSetValueEx(rkey, L"URLUpdateInfo", 0, REG_SZ, (const BYTE*)appURL, (wcslen(appURL) + 1) * sizeof(WCHAR));
@@ -763,7 +763,7 @@ int APIENTRY wWinMain(HINSTANCE instance, HINSTANCE prevInstance, LPWSTR cmdPara
 						processCreated);
 					if (error != ERROR_SUCCESS) {
 						writeLog(FormatUpdateError(
-							L"Could not finish closing Telegram; continuing with copy retries.",
+							L"Could not finish closing EzChat; continuing with copy retries.",
 							error));
 					}
 				}
