@@ -107,6 +107,15 @@ jobs:
           git config --global user.email "builder@example.com"
           git config --global user.name "Builder"
 
+          # Release builds need Release libraries; Debug builds can skip them.
+          if [ "${{ inputs.configuration }}" = "Release" ]; then
+            echo "LIBS_ARGS=silent" >> $GITHUB_ENV
+            echo "LIBS_CACHE_TAG=rel" >> $GITHUB_ENV
+          else
+            echo "LIBS_ARGS=skip-release silent" >> $GITHUB_ENV
+            echo "LIBS_CACHE_TAG=dbg" >> $GITHUB_ENV
+          fi
+
       - name: Native Tools Command Prompt.
         uses: Eden-CI/msvc-dev-cmd@master
         with:
@@ -130,13 +139,13 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ env.LibrariesPath }}
-          key: ${{ runner.OS }}-x64-libs-${{ env.CACHE_KEY }}
-          restore-keys: ${{ runner.OS }}-x64-libs-
+          key: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-
 
       - name: Libraries.
         run: |
           set CARGO_INCREMENTAL=0
-          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat skip-release silent
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat %LIBS_ARGS%
 
       - name: Read API credentials.
         shell: bash
