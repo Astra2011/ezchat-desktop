@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_utilities.h"
 #include "lang/lang_file_parser.h"
 #include "lang/lang_tag.h" // kTextCommandLangTag.
+#include <QtCore/QRegularExpression>
 #include "base/platform/base_platform_info.h"
 #include "base/qthelp_regex.h"
 #include "test/test_l10n_seams.h"
@@ -28,6 +29,13 @@ constexpr auto kSerializeVersion = 1;
 constexpr auto kCloudLangPackName = "tdesktop"_cs;
 constexpr auto kCustomLanguage = "#custom"_cs;
 constexpr auto kLangValuesLimit = 20000;
+
+// Rebrand user-visible strings from either the compiled-in or cloud pack.
+// Word boundaries keep URLs such as t.me/TelegramTips intact.
+[[nodiscard]] QString RebrandPackValue(QString value) {
+	static const auto expression = QRegularExpression(u"\\bTelegram\\b"_q);
+	return value.replace(expression, u"EzChat"_q);
+}
 
 std::vector<QString> PrepareDefaultValues() {
 	auto result = std::vector<QString>();
@@ -803,14 +811,14 @@ rpl::producer<> Updated() {
 }
 
 QString GetNonDefaultValue(const QByteArray &key) {
-	return GetInstance().getNonDefaultValue(key);
+	return RebrandPackValue(GetInstance().getNonDefaultValue(key));
 }
 
 namespace details {
 
 QString Current(ushort key) {
 	Test::NoteLangRead(key);
-	return GetInstance().getValue(key);
+	return RebrandPackValue(GetInstance().getValue(key));
 }
 
 rpl::producer<QString> Value(ushort key) {
