@@ -249,7 +249,7 @@ void ShowTranslocationError() {
 	NSAlert *alert = [[NSAlert alloc] init];
 	alert.alertStyle = NSAlertStyleCritical;
 	alert.messageText = @"Telegram Desktop can't start from here";
-	alert.informativeText = @"macOS started this copy of Telegram Desktop "
+	alert.informativeText = @"macOS started this copy of EzChat Desktop "
 		@"from a read-only temporary location (App Translocation), so it "
 		@"can't use its own folder. Please reinstall the app and launch it "
 		@"again.";

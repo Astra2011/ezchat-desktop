@@ -221,7 +221,7 @@ void MainWindow::createGlobalMenu() {
 		});
 
 	auto quit = file->addAction(
-		tr::lng_mac_menu_quit_telegram(tr::now, lt_telegram, u"Telegram"_q),
+		tr::lng_mac_menu_quit_telegram(tr::now, lt_telegram, u"EzChat"_q),
 		this,
 		[=] { quitFromTray(); },
 		QKeySequence::Quit);

@@ -96,7 +96,7 @@ QByteArray InstallScript(const QString &shellToken) {
 		"document.documentElement.appendChild("
 		"document.createElement('body'));"
 		"}"
-		"document.title = 'Telegram';"
+		"document.title = 'EzChat';"
 		"const metaRobots = document.createElement('meta');"
 		"metaRobots.name = 'robots';"
 		"metaRobots.content = 'noindex, nofollow';"
