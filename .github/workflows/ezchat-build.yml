@@ -1,0 +1,216 @@
+name: Build EzChat.
+
+# Run manually from the Actions tab: "Build EzChat." -> "Run workflow".
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        required: true
+        default: Debug
+        type: choice
+        options:
+          - Debug
+          - Release
+      upload_artifact:
+        description: Upload the built executables as an artifact
+        required: false
+        default: true
+        type: boolean
+      cache_only:
+        description: Build libraries and save caches only, skip the app build
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  windows:
+    name: Windows x64 (${{ inputs.configuration }})
+    runs-on: windows-latest
+
+    env:
+      UPLOAD_ARTIFACT: ${{ inputs.upload_artifact }}
+      ONLY_CACHE: ${{ inputs.cache_only }}
+      PREPARE_PATH: "Telegram/build/prepare/prepare.py"
+      API_ID: ${{ secrets.TDESKTOP_API_ID }}
+      API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Free up disk space.
+        shell: pwsh
+        run: |
+          $before = (Get-PSDrive C).Free / 1GB
+
+          # robocopy 空目录镜像配合多线程，是 Windows 上删除海量小文件最快的方式，
+          # 远快于 rmdir /s /q 或 Remove-Item，避免清理步骤长时间卡住。
+          $empty = Join-Path $env:TEMP 'ezchat-empty'
+          New-Item -ItemType Directory -Force -Path $empty | Out-Null
+
+          function Remove-TreeFast([string]$path) {
+            if (-not (Test-Path -LiteralPath $path)) { return }
+            Write-Host ("  removing {0} ..." -f $path)
+            robocopy $empty $path /MIR /MT:16 /NFL /NDL /NJH /NJS /NP /R:0 /W:0 | Out-Null
+            if ($LASTEXITCODE -le 7) {
+              cmd /c rmdir /s /q "$path" 2>$null
+            }
+            Write-Host ("  removed {0} ({1:N1} GB free)" -f $path, ((Get-PSDrive C).Free / 1GB))
+          }
+
+          # Qt 构建约需 30 GB，腾到 40 GB 就提前结束，不去删无关目录浪费时间。
+          $targets = @(
+            "C:\Android\android-sdk",
+            "C:\Program Files\dotnet",
+            "C:\Miniconda",
+            "C:\msys64",
+            "$env:USERPROFILE\.cargo",
+            "$env:USERPROFILE\.rustup",
+            "C:\Program Files\LLVM",
+            "C:\vcpkg",
+            "$env:LOCALAPPDATA\Docker",
+            "C:\ProgramData\DockerDesktop"
+          )
+          $targetGb = 40
+          $reached = $false
+          foreach ($p in $targets) {
+            if ((Get-PSDrive C).Free / 1GB -ge $targetGb) { $reached = $true; break }
+            Remove-TreeFast $p
+          }
+          if ($reached) { Write-Host ('target reached, skipped remaining directories.') }
+          Write-Host ('{0:N1} GB -> {1:N1} GB free' -f $before, ((Get-PSDrive C).Free / 1GB))
+
+      - name: Prepare directories.
+        run: |
+          mkdir %userprofile%\TBuild\Libraries\win64
+          mklink /d %GITHUB_WORKSPACE%\TBuild %userprofile%\TBuild
+          echo TBUILD=%GITHUB_WORKSPACE%\TBuild>>%GITHUB_ENV%
+          echo LibrariesPath=%GITHUB_WORKSPACE%\TBuild\Libraries\win64>>%GITHUB_ENV%
+
+      - name: Get repository name.
+        shell: bash
+        run: echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
+
+      - name: Clone.
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          path: ${{ env.TBUILD }}\${{ env.REPO_NAME }}
+
+      - name: First set up.
+        shell: bash
+        run: |
+          DOCPATH=$TBUILD/$REPO_NAME/docs/building-win.md
+          SDK="$(grep "SDK version" $DOCPATH | sed -r 's/.*\*\*(.*)\*\* SDK version.*/\1/')"
+          echo "SDK=$SDK" >> $GITHUB_ENV
+          sed -i '/CMAKE_${lang}_FLAGS_DEBUG_INIT/s/${_Zi}//' "$PROGRAMFILES"/CMake/share/cmake*/Modules/Platform/Windows-MSVC.cmake
+          echo "$(sha256sum $TBUILD/$REPO_NAME/$PREPARE_PATH | awk '{ print $1 }')" >> CACHE_KEY.txt
+          echo "$SDK" >> CACHE_KEY.txt
+          echo "CACHE_KEY=$(sha256sum CACHE_KEY.txt | awk '{ print $1 }')" >> $GITHUB_ENV
+          git config --global user.email "builder@example.com"
+          git config --global user.name "Builder"
+
+          # Release builds need Release libraries; Debug builds can skip them.
+          if [ "${{ inputs.configuration }}" = "Release" ]; then
+            echo "LIBS_ARGS=silent" >> $GITHUB_ENV
+            echo "LIBS_CACHE_TAG=rel" >> $GITHUB_ENV
+          else
+            echo "LIBS_ARGS=skip-release silent" >> $GITHUB_ENV
+            echo "LIBS_CACHE_TAG=dbg" >> $GITHUB_ENV
+          fi
+
+      - name: Native Tools Command Prompt.
+        uses: Eden-CI/msvc-dev-cmd@master
+        with:
+          arch: x64
+          sdk: ${{ env.SDK }}
+          toolset: 14.44
+
+      - name: NuGet sources.
+        run: |
+          nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
+          nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
+
+      # restore 与 save 分开：缓存必须在 Libraries 完成后立刻落盘，不能等整个 job
+      # 结束。否则后续 app 构建一失败（或 run 被取消），几小时的编译成果就丢了。
+      - name: ThirdParty cache.
+        id: cache-third-party
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ runner.OS }}-${{ runner.arch }}-third-party-polysrv-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-${{ runner.arch }}-third-party-polysrv-
+
+      - name: Libraries cache.
+        id: cache-libs
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.LibrariesPath }}
+          key: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-polysrv-${{ env.CACHE_KEY }}
+          restore-keys: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-polysrv-
+
+      - name: Libraries.
+        env:
+          SKIP_DUMPSYMS: "1"
+        run: |
+          set CARGO_INCREMENTAL=0
+          %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat %LIBS_ARGS%
+
+      - name: Read API credentials.
+        shell: bash
+        run: |
+          if [ -n "$API_ID" ] && [ -n "$API_HASH" ]; then
+            echo "TDESKTOP_BUILD_API=-D TDESKTOP_API_ID=$API_ID -D TDESKTOP_API_HASH=$API_HASH" >> $GITHUB_ENV
+          else
+            echo "TDESKTOP_BUILD_API=-D TDESKTOP_API_TEST=ON" >> $GITHUB_ENV
+          fi
+
+      - name: Free up some disk space.
+        shell: bash
+        run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/src/wallet_engine/*' ')' -type f ')' -o -empty ')' -delete
+
+      - name: Save ThirdParty cache.
+        if: steps.cache-third-party.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ steps.cache-third-party.outputs.cache-primary-key }}
+
+      - name: Save Libraries cache.
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.LibrariesPath }}
+          key: ${{ steps.cache-libs.outputs.cache-primary-key }}
+
+      - name: EzChat Desktop build.
+        if: env.ONLY_CACHE == 'false'
+        run: |
+          cd %TBUILD%\%REPO_NAME%\Telegram
+          call configure.bat ^
+          %TDESKTOP_BUILD_API% ^
+          -D CMAKE_CONFIGURATION_TYPES=${{ inputs.configuration }} ^
+          -D CMAKE_COMPILE_WARNING_AS_ERROR=ON ^
+          -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= ^
+          -D DESKTOP_APP_DISABLE_AUTOUPDATE=OFF ^
+          -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF
+
+          cmake --build ..\out --config ${{ inputs.configuration }} --parallel
+
+      - name: Move artifact.
+        if: ${{ inputs.upload_artifact && !inputs.cache_only }}
+        run: |
+          set OUT=%TBUILD%\%REPO_NAME%\out\${{ inputs.configuration }}
+          mkdir artifact
+          move %OUT%\EzChat.exe artifact\
+          move %OUT%\Updater.exe artifact\
+
+      - name: Upload artifact.
+        if: ${{ inputs.upload_artifact && !inputs.cache_only }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: EzChat-${{ inputs.configuration }}-x64
+          path: artifact\
+          retention-days: 7

@@ -1,0 +1,16 @@
+AppName               EzChat
+ShortAppName          EzChat
+ApplicationName       EzChatDesktop
+CompanyName           EzChat
+BundleIdentifier      im.ezchat.desktop
+MacOSBundleIdentifier im.ezchat.EzChat
+AppXIdentityName      EzChat.EzChatDesktop
+AppXStartupTaskId     EzChatStartupTask
+OutputName            EzChat
+OutputBasePrefix      ezchat-setup
+UrlScheme             srv
+AppId                 93E83D66-46CE-41D4-BE81-A9C57099F65B
+Description           EzChat messenger
+Homepage              https://github.com/Astra2011/ezchat-desktop
+RemoteDomain          https://Astra2011.github.io/ezchat-desktop
+BrandColor            09090b
