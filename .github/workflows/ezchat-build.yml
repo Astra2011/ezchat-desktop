@@ -143,6 +143,8 @@ jobs:
           restore-keys: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-
 
       - name: Libraries.
+        env:
+          SKIP_DUMPSYMS: "1"
         run: |
           set CARGO_INCREMENTAL=0
           %TBUILD%\%REPO_NAME%\Telegram\build\prepare\win.bat %LIBS_ARGS%
