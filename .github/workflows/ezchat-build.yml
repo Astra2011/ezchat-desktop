@@ -60,7 +60,9 @@ jobs:
             Write-Host ("  removed {0} ({1:N1} GB free)" -f $path, ((Get-PSDrive C).Free / 1GB))
           }
 
-          # Qt 构建约需 30 GB，腾到 40 GB 就提前结束，不去删无关目录浪费时间。
+          # Release 构建要同时编 Debug+Release 两套 Qt，实测需 65 GB 以上；
+          # 之前目标 40 GB 导致 Qt 安装 wasmdeployqt.pdb 时磁盘写满失败。
+          # 删光所有预设目录，不提前结束。
           $targets = @(
             "C:\Android\android-sdk",
             "C:\Program Files\dotnet",
@@ -73,7 +75,7 @@ jobs:
             "$env:LOCALAPPDATA\Docker",
             "C:\ProgramData\DockerDesktop"
           )
-          $targetGb = 40
+          $targetGb = 65
           $reached = $false
           foreach ($p in $targets) {
             if ((Get-PSDrive C).Free / 1GB -ge $targetGb) { $reached = $true; break }
