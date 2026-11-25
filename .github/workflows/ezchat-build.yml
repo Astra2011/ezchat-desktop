@@ -17,6 +17,11 @@ on:
         required: false
         default: true
         type: boolean
+      cache_only:
+        description: Build libraries and save caches only, skip the app build
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   windows:
@@ -25,7 +30,7 @@ jobs:
 
     env:
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact }}
-      ONLY_CACHE: "false"
+      ONLY_CACHE: ${{ inputs.cache_only }}
       PREPARE_PATH: "Telegram/build/prepare/prepare.py"
       API_ID: ${{ secrets.TDESKTOP_API_ID }}
       API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
@@ -128,15 +133,19 @@ jobs:
           nuget sources Disable -Name "Microsoft Visual Studio Offline Packages"
           nuget sources Add -Source https://api.nuget.org/v3/index.json & exit 0
 
+      # restore 与 save 分开：缓存必须在 Libraries 完成后立刻落盘，不能等整个 job
+      # 结束。否则后续 app 构建一失败（或 run 被取消），几小时的编译成果就丢了。
       - name: ThirdParty cache.
-        uses: actions/cache@v6
+        id: cache-third-party
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ env.TBUILD }}\ThirdParty
           key: ${{ runner.OS }}-${{ runner.arch }}-third-party-${{ env.CACHE_KEY }}
           restore-keys: ${{ runner.OS }}-${{ runner.arch }}-third-party-
 
       - name: Libraries cache.
-        uses: actions/cache@v6
+        id: cache-libs
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ env.LibrariesPath }}
           key: ${{ runner.OS }}-x64-${{ env.LIBS_CACHE_TAG }}-libs-${{ env.CACHE_KEY }}
@@ -162,7 +171,22 @@ jobs:
         shell: bash
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/src/wallet_engine/*' ')' -type f ')' -o -empty ')' -delete
 
+      - name: Save ThirdParty cache.
+        if: steps.cache-third-party.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.TBUILD }}\ThirdParty
+          key: ${{ steps.cache-third-party.outputs.cache-primary-key }}
+
+      - name: Save Libraries cache.
+        if: steps.cache-libs.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.LibrariesPath }}
+          key: ${{ steps.cache-libs.outputs.cache-primary-key }}
+
       - name: EzChat Desktop build.
+        if: env.ONLY_CACHE == 'false'
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
           call configure.bat ^
@@ -176,7 +200,7 @@ jobs:
           cmake --build ..\out --config ${{ inputs.configuration }} --parallel
 
       - name: Move artifact.
-        if: ${{ inputs.upload_artifact }}
+        if: ${{ inputs.upload_artifact && !inputs.cache_only }}
         run: |
           set OUT=%TBUILD%\%REPO_NAME%\out\${{ inputs.configuration }}
           mkdir artifact
@@ -184,7 +208,7 @@ jobs:
           move %OUT%\Updater.exe artifact\
 
       - name: Upload artifact.
-        if: ${{ inputs.upload_artifact }}
+        if: ${{ inputs.upload_artifact && !inputs.cache_only }}
         uses: actions/upload-artifact@v7
         with:
           name: EzChat-${{ inputs.configuration }}-x64
