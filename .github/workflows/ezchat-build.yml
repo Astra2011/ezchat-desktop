@@ -225,6 +225,7 @@ jobs:
         run: |
           cd %TBUILD%\%REPO_NAME%\Telegram
           call configure.bat ^
+          x64 ^
           %TDESKTOP_BUILD_API% ^
           -D CMAKE_CONFIGURATION_TYPES=${{ inputs.configuration }} ^
           -D CMAKE_COMPILE_WARNING_AS_ERROR=ON ^
