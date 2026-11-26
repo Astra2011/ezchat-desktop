@@ -192,7 +192,7 @@ jobs:
           ls -l "$LibrariesPath/Qt-6.11.2/lib/cmake/Qt6Core/Qt6CoreConfig.cmake" || true
           find "$LibrariesPath/Qt-6.11.2" -name '*.cmake' | wc -l
           mkdir -p "$RUNNER_TEMP/qtprobe"
-          printf 'cmake_minimum_required(VERSION 3.25)\nproject(qtprobe NONE)\nfind_package(QT NAMES Qt6 COMPONENTS Core QUIET)\nmessage(STATUS "QT_FOUND=${QT_FOUND} QT_VERSION=${QT_VERSION} QT_DIR=${QT_DIR}")\n' > "$RUNNER_TEMP/qtprobe/CMakeLists.txt"
+          printf 'cmake_minimum_required(VERSION 3.25)\nproject(qtprobe LANGUAGES C CXX)\nfind_package(QT NAMES Qt6 COMPONENTS Core QUIET)\nmessage(STATUS "QT_FOUND=${QT_FOUND} QT_VERSION=${QT_VERSION} QT_DIR=${QT_DIR}")\nif(NOT QT_FOUND)\n  find_package(Qt6 COMPONENTS Core REQUIRED)\nendif()\n' > "$RUNNER_TEMP/qtprobe/CMakeLists.txt"
           cmake -S "$RUNNER_TEMP/qtprobe" -B "$RUNNER_TEMP/qtprobe/out" -D CMAKE_PREFIX_PATH="$LibrariesPath/Qt-6.11.2" > "$RUNNER_TEMP/qtprobe/probe.log" 2>&1 || true
           grep -n -A30 -B8 -E 'CMake Error|CMake Warning|Error:' "$RUNNER_TEMP/qtprobe/probe.log" | head -200 || true
 
