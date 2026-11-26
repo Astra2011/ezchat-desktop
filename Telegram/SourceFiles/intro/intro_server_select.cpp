@@ -45,6 +45,8 @@ constexpr auto kConnectTimeout = crl::time(20000);
 constexpr auto kConnectDotsMs = crl::time(400);
 constexpr auto kConnectMaxDots = 3;
 
+} // namespace
+
 ConnectingBox::ConnectingBox(
 		QWidget *,
 		not_null<Main::Account*> account,
@@ -137,8 +139,6 @@ void ConnectingBox::updateText() {
 			_serverName) + QString(_dotsCount, '.'));
 	}
 }
-
-} // namespace
 
 ServerSelectWidget::ServerSelectWidget(
 	QWidget *parent,

@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "intro/intro_start.h"
 
 #include "lang/lang_keys.h"
+#include "boxes/abstract_box.h"
 #include "intro/intro_qr.h"
 #include "intro/intro_server_select.h"
 #include "intro/intro_phone.h"
