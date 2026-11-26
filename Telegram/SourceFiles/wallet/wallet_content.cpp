@@ -4347,7 +4347,7 @@ struct OldWalletAppLink {
 	if (configured.isEmpty()) {
 		return {};
 	}
-	const auto prefix = u"tg://resolve?"_q;
+	const auto prefix = u"ez://resolve?"_q;
 	const auto local = Core::TryConvertUrlToLocal(url);
 	if (!local.startsWith(prefix, Qt::CaseInsensitive)) {
 		return {};

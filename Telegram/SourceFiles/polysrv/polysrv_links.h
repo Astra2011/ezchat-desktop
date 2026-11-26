@@ -13,16 +13,16 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace PolySrv {
 
-// The shapes of a srv:// link.
+// The shapes of a ez:// link.
 struct Link {
 	enum class Type {
 		// Not a link we know.
 		Unknown,
-		// srv://addserver?host=..&port=.. -- record a server.
+		// ez://addserver?host=..&port=.. -- record a server.
 		AddServer,
-		// srv://oauth?.. and srv://resolve?.. -- a command.
+		// ez://oauth?.. and ez://resolve?.. -- a command.
 		Command,
-		// srv://<server host>/<rest> -- a link of one server.
+		// ez://<server host>/<rest> -- a link of one server.
 		ServerHost,
 	};
 

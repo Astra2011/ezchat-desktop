@@ -171,7 +171,7 @@ void SetupCopyDeepLink(
 		not_null<Window::Controller*> window,
 		not_null<Button*> button,
 		const QString &id) {
-	const auto link = u"tg://settings/experimental/"_q + id;
+	const auto link = u"ez://settings/experimental/"_q + id;
 	const auto menu
 		= button->lifetime().make_state<base::unique_qptr<Ui::PopupMenu>>();
 	button->events(

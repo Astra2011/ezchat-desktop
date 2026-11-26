@@ -151,7 +151,7 @@ void SetCrashAnnotationsGL() {
 base::options::toggle OptionSkipUrlSchemeRegister({
 	.id = kOptionSkipUrlSchemeRegister,
 	.name = "Skip URL scheme register",
-	.description = "Don't re-register tg:// URL scheme on autoupdate.",
+	.description = "Don't re-register ez:// URL scheme on autoupdate.",
 });
 
 } // namespace
@@ -1258,14 +1258,14 @@ void Application::checkStartUrls() {
 		return;
 	}
 	if (!Core::App().passcodeLocked()) {
-		// WHY: tg://resolve?acc= switches the account, which shows the
+		// WHY: ez://resolve?acc= switches the account, which shows the
 		// new main widget and re-enters here while we still iterate,
 		// so take the list out and merge whatever was added meanwhile.
 		const auto urls = base::take(cRefStartUrls());
 		auto left = ranges::views::all(
 			urls
 		) | ranges::views::filter([&](const QUrl &url) {
-			if (url.scheme() == u"srv"_q) {
+			if (url.scheme() == u"ez"_q) {
 				return !openServerLink(url.toString(), {});
 			} else if (url.scheme() == u"tonsite"_q) {
 				iv().showTonSite(url.toString(), {});
@@ -1332,7 +1332,7 @@ void Application::registerWindowActivation(not_null<QWidget*> window) {
 bool Application::openLocalUrl(const QString &url, QVariant context) {
 	const auto urlTrimmed = url.trimmed();
 	if (!passcodeLocked()
-		&& urlTrimmed.startsWith(u"srv://"_q, Qt::CaseInsensitive)) {
+		&& urlTrimmed.startsWith(u"ez://"_q, Qt::CaseInsensitive)) {
 		return openServerLink(urlTrimmed, context);
 	}
 	return openTelegramUrl(urlTrimmed, context, false);
@@ -1342,7 +1342,7 @@ bool Application::openTelegramUrl(
 		const QString &url,
 		QVariant context,
 		bool serverRouted) {
-	const auto protocol = u"tg://"_q;
+	const auto protocol = u"ez://"_q;
 	if (url.startsWith(protocol, Qt::CaseInsensitive)
 		&& !passcodeLocked()) {
 		const auto command = url.mid(protocol.size());
@@ -1366,7 +1366,7 @@ bool Application::openTelegramUrl(
 			return true;
 		}
 	}
-	return openCustomUrl("tg://", LocalUrlHandlers(), url, context);
+	return openCustomUrl("ez://", LocalUrlHandlers(), url, context);
 }
 
 bool Application::openServerLink(
@@ -1419,12 +1419,12 @@ bool Application::openServerLink(
 				const auto rest = link.rest;
 				InvokeQueued(this, [=] {
 					_domain->maybeActivate(account);
-					openTelegramUrl(u"tg://"_q + rest, context, true);
+					openTelegramUrl(u"ez://"_q + rest, context, true);
 				});
 				return true;
 			}
 		}
-		return openTelegramUrl(u"tg://"_q + link.rest, context, false);
+		return openTelegramUrl(u"ez://"_q + link.rest, context, false);
 	}
 	default:
 		return false;
@@ -2277,7 +2277,7 @@ void Application::RegisterUrlScheme() {
 	base::Platform::RegisterUrlScheme(base::Platform::UrlSchemeDescriptor{
 		.executable = Platform::ExecutablePathForShortcuts(),
 		.arguments = arguments,
-		.protocol = u"tg"_q,
+		.protocol = u"ez"_q,
 		.protocolName = Branding::AppName.utf16() + u" Link"_q,
 		.shortAppName = Branding::ShortAppName.utf16(),
 		.longAppName = QCoreApplication::applicationName(),
@@ -2310,7 +2310,7 @@ void Application::RegisterUrlScheme() {
 	base::Platform::RegisterUrlScheme(base::Platform::UrlSchemeDescriptor{
 		.executable = Platform::ExecutablePathForShortcuts(),
 		.arguments = arguments,
-		.protocol = u"srv"_q,
+		.protocol = u"ez"_q,
 		.protocolName = Branding::AppName.utf16() + u" Link"_q,
 		.shortAppName = Branding::ShortAppName.utf16(),
 		.longAppName = QCoreApplication::applicationName(),

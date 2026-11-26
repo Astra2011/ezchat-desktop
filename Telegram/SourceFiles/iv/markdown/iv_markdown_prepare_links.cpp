@@ -145,7 +145,7 @@ namespace {
 
 [[nodiscard]] bool IsAllowedExternalTarget(const QString &target) {
 	static const auto kSchemes = std::array{
-		u"tg"_q,
+		u"ez"_q,
 		u"ton"_q,
 		u"tel"_q,
 	};

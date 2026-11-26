@@ -119,7 +119,7 @@ constexpr auto kPopularAppBotsLimit = 100;
 	if (local.startsWith(u"ton://"_q, Qt::CaseInsensitive)
 		|| local.startsWith(u"tonsite://"_q, Qt::CaseInsensitive)) {
 		return true;
-	} else if (!local.startsWith(u"tg://"_q, Qt::CaseInsensitive)) {
+	} else if (!local.startsWith(u"ez://"_q, Qt::CaseInsensitive)) {
 		return false;
 	}
 	using namespace qthelp;
@@ -1085,7 +1085,7 @@ void WebViewInstance::resolve() {
 bool WebViewInstance::openAppFromBotMenuLink() {
 	const auto url = QString::fromUtf8(_button.url);
 	const auto local = Core::TryConvertUrlToLocal(url);
-	const auto prefix = u"tg://resolve?"_q;
+	const auto prefix = u"ez://resolve?"_q;
 	if (!local.startsWith(prefix)) {
 		return false;
 	}
@@ -1649,7 +1649,7 @@ bool WebViewInstance::botHandleLocalUri(QString uri, bool keepOpen) {
 	const auto local = Core::TryConvertUrlToLocal(uri).left(8192);
 	if (Core::InternalPassportOrOAuthLink(local)) {
 		return true;
-	} else if (!local.startsWith(u"tg://"_q, Qt::CaseInsensitive)
+	} else if (!local.startsWith(u"ez://"_q, Qt::CaseInsensitive)
 		&& !Core::IsGetPremiumLocalUrl(local)
 		&& !local.startsWith(u"tonsite://"_q, Qt::CaseInsensitive)
 		&& !local.startsWith(u"ton://"_q, Qt::CaseInsensitive)) {

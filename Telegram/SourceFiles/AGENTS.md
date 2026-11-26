@@ -32,7 +32,7 @@ This atlas divides Telegram Desktop's sources into named areas, ordered from fou
 
 ### core/links — links and clickable entities
 - Paths: `SourceFiles/core/deep_links/`, `SourceFiles/core/local_url_handlers*`, `SourceFiles/core/click_handler_types*`, `SourceFiles/core/phone_click_handler*`, `SourceFiles/core/bank_card_click_handler*`
-- Turning tg:// and t.me links, deep links and clickable text entities into in-app navigation and actions. It must not own the screens those links open. Today it also builds the personal-channel picker in `local_url_handlers.cpp`; that belongs in `settings/sections` beside the account-info page.
+- Turning ez:// and t.me links, deep links and clickable text entities into in-app navigation and actions. It must not own the screens those links open. Today it also builds the personal-channel picker in `local_url_handlers.cpp`; that belongs in `settings/sections` beside the account-info page.
 
 ### core/updates — self-update
 - Paths: `SourceFiles/core/update_*`, `SourceFiles/_other/updater*`, `SourceFiles/_other/packer*`, `SourceFiles/platform/linux/update_install_linux*`

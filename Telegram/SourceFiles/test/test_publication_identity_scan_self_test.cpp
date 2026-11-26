@@ -422,7 +422,7 @@ void SelfPublicationPresentations() {
 		u"https://t.me/audit_example_handle"_q,
 		u"http://telegram.me/audit_example_handle"_q,
 		u"https://telegram.me/audit_example_handle"_q,
-		u"tg://resolve?domain=audit_example_handle"_q,
+		u"ez://resolve?domain=audit_example_handle"_q,
 		u"/synthetic/screenshots/audit_example_handle/image.png"_q,
 	};
 	for (auto i = 0; i < spellings.size(); ++i) {

@@ -178,8 +178,8 @@ Terminal=false
 StartupWMClass={ApplicationName}
 Type=Application
 Categories=Chat;Network;InstantMessaging;Qt;
-MimeType=x-scheme-handler/tg;x-scheme-handler/tonsite;x-scheme-handler/ton;x-scheme-handler/{UrlScheme};
-Keywords=tg;chat;im;messaging;messenger;sms;tdesktop;ezchat;
+MimeType=x-scheme-handler/ez;x-scheme-handler/tonsite;x-scheme-handler/ton;x-scheme-handler/{UrlScheme};
+Keywords=ez;chat;im;messaging;messenger;sms;tdesktop;ezchat;
 Actions=quit;
 DBusActivatable=true
 SingleMainWindow=true
@@ -279,7 +279,7 @@ def GenerateAppStream(values):
     <provides>
         <binary>{OutputName}</binary>
         <dbus type="session">{BundleIdentifier}</dbus>
-        <mediatype>x-scheme-handler/tg</mediatype>
+        <mediatype>x-scheme-handler/ez</mediatype>
         <mediatype>x-scheme-handler/tonsite</mediatype>
         <mediatype>x-scheme-handler/ton</mediatype>
         <mediatype>x-scheme-handler/{UrlScheme}</mediatype>

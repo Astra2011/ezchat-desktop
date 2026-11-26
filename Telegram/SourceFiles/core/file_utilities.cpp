@@ -141,10 +141,10 @@ bool IsUrlSchemeAllowed(const QString &scheme) {
 		u"itmss"_q,
 		u"mailto"_q,
 		u"tel"_q,
-		u"tg"_q,
+		u"ez"_q,
 		u"ton"_q,
 		u"tonsite"_q,
-		u"srv"_q,
+		u"ez"_q,
 	};
 	if (ranges::contains(kSchemes, scheme)) {
 		return true;

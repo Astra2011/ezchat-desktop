@@ -108,7 +108,7 @@ The identity grammar is finite and applies only to supplied descriptors:
   not share profile fields.
 - **Username/link:** the complete supplied username as a bounded token,
   `@username`, `t.me/username`, `http[s]://t.me/username`,
-  `http[s]://telegram.me/username` or `tg://resolve?domain=username`.
+  `http[s]://telegram.me/username` or `ez://resolve?domain=username`.
   A complete username path component in screenshot metadata counts too.
   `SaveImage` markers are relative to the evidence directory
   ([grammar](test_capture.md#saved-images-and-the-screenshot-marker)), so a

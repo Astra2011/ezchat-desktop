@@ -15,7 +15,7 @@ namespace PolySrv {
 Link ParseLink(const QString &url) {
 	auto result = Link();
 	const auto trimmed = url.trimmed();
-	const auto protocol = u"srv://"_q;
+	const auto protocol = u"ez://"_q;
 	if (!trimmed.startsWith(protocol, Qt::CaseInsensitive)) {
 		return result;
 	}
@@ -43,7 +43,7 @@ Link ParseLink(const QString &url) {
 		return result;
 	}
 
-	// A link of one server: srv://<server host>/<rest>.
+	// A link of one server: ez://<server host>/<rest>.
 	const auto slash = path.indexOf('/');
 	if (slash <= 0) {
 		return result;

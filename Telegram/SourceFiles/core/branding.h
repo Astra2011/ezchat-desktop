@@ -29,7 +29,7 @@ constexpr auto MacOSBundleIdentifier = "im.ezchat.EzChat"_cs;
 constexpr auto OutputName = "EzChat"_cs;
 
 // The custom URL scheme the application answers to.
-constexpr auto UrlScheme = "srv"_cs;
+constexpr auto UrlScheme = "ez"_cs;
 
 // Where the project lives.
 constexpr auto Homepage = "https://github.com/Astra2011/ezchat-desktop"_cs;

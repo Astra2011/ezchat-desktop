@@ -53,7 +53,7 @@ base::options::option<QString> FavoriteLink({
 	.id = kOptionFolderFavoriteLink,
 	.name = "Favorite folder button",
 	.description = "Favorite button at the bottom of the folders strip "
-		"that opens a tg:// or t.me/ link.",
+		"that opens a ez:// or t.me/ link.",
 });
 
 enum class Category {
@@ -74,7 +74,7 @@ struct ParsedLink {
 
 [[nodiscard]] ParsedLink ParseFavoriteLink(const QString &link) {
 	const auto local = Core::TryConvertUrlToLocal(link.trimmed());
-	const auto prefix = u"tg://"_q;
+	const auto prefix = u"ez://"_q;
 	if (!local.startsWith(prefix, Qt::CaseInsensitive)) {
 		return {};
 	}
@@ -192,7 +192,7 @@ const char kOptionFolderFavoriteLink[] = "folder-favorite-link";
 
 bool ValidFolderFavoriteLink(const QString &link) {
 	const auto local = Core::TryConvertUrlToLocal(link.trimmed());
-	return local.startsWith(u"tg://"_q, Qt::CaseInsensitive)
+	return local.startsWith(u"ez://"_q, Qt::CaseInsensitive)
 		|| Core::IsGetPremiumLocalUrl(local);
 }
 
