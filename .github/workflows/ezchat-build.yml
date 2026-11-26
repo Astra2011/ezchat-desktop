@@ -114,6 +114,12 @@ jobs:
           SDK="$(grep "SDK version" $DOCPATH | sed -r 's/.*\*\*(.*)\*\* SDK version.*/\1/')"
           echo "SDK=$SDK" >> $GITHUB_ENV
           sed -i '/CMAKE_${lang}_FLAGS_DEBUG_INIT/s/${_Zi}//' "$PROGRAMFILES"/CMake/share/cmake*/Modules/Platform/Windows-MSVC.cmake
+
+          # Newer CMake reports deprecation warnings inside Qt's own config
+          # files; the helper's -Werror flags turn those into errors, which
+          # makes find_package(QT ...) fail with "Neither Qt6 nor Qt5 is found".
+          sed -i "s/'-Werror=dev', '-Werror=deprecated', '--warn-uninitialized', //" "$TBUILD/$REPO_NAME/cmake/run_cmake.py"
+
           echo "$(sha256sum $TBUILD/$REPO_NAME/$PREPARE_PATH | awk '{ print $1 }')" >> CACHE_KEY.txt
           echo "$SDK" >> CACHE_KEY.txt
           echo "CACHE_KEY=$(sha256sum CACHE_KEY.txt | awk '{ print $1 }')" >> $GITHUB_ENV
@@ -194,7 +200,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/qtprobe"
           printf 'cmake_minimum_required(VERSION 3.25)\nproject(qtprobe LANGUAGES C CXX)\nfind_package(QT NAMES Qt6 COMPONENTS Core QUIET)\nmessage(STATUS "QT_FOUND=${QT_FOUND} QT_VERSION=${QT_VERSION} QT_DIR=${QT_DIR}")\nif(NOT QT_FOUND)\n  find_package(Qt6 COMPONENTS Core REQUIRED)\nendif()\n' > "$RUNNER_TEMP/qtprobe/CMakeLists.txt"
           cmake -S "$RUNNER_TEMP/qtprobe" -B "$RUNNER_TEMP/qtprobe/out" -D CMAKE_PREFIX_PATH="$LibrariesPath/Qt-6.11.2" > "$RUNNER_TEMP/qtprobe/probe.log" 2>&1 || true
-          grep -n -A30 -B8 -E 'CMake Error|CMake Warning|Error:' "$RUNNER_TEMP/qtprobe/probe.log" | head -200 || true
+          echo '--- plain probe ---'
+          grep -E 'QT_FOUND|Configuring|CMake Error' "$RUNNER_TEMP/qtprobe/probe.log" | head -30 || true
+          cmake -S "$RUNNER_TEMP/qtprobe" -B "$RUNNER_TEMP/qtprobe/out-strict" -D CMAKE_PREFIX_PATH="$LibrariesPath/Qt-6.11.2" -Werror=dev -Werror=deprecated --warn-uninitialized > "$RUNNER_TEMP/qtprobe/probe-strict.log" 2>&1 || true
+          echo '--- strict probe ---'
+          grep -n -A20 -B5 -E 'CMake Error|Error:' "$RUNNER_TEMP/qtprobe/probe-strict.log" | head -120 || true
 
       - name: Save ThirdParty cache.
         if: steps.cache-third-party.outputs.cache-hit != 'true'
