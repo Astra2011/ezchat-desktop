@@ -22,6 +22,11 @@ on:
         required: false
         default: false
         type: boolean
+      skip_cleanup:
+        description: Skip disk cleanup, for quick cache diagnostics only
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   windows:
@@ -41,6 +46,7 @@ jobs:
 
     steps:
       - name: Free up disk space.
+        if: ${{ !inputs.skip_cleanup }}
         shell: pwsh
         run: |
           $before = (Get-PSDrive C).Free / 1GB
@@ -171,8 +177,23 @@ jobs:
           fi
 
       - name: Free up some disk space.
+        if: ${{ !inputs.skip_cleanup }}
         shell: bash
         run: find $LibrariesPath '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/src/wallet_engine/*' ')' -type f ')' -o -empty ')' -delete
+
+      - name: Probe Qt installation.
+        if: env.ONLY_CACHE == 'false'
+        shell: bash
+        run: |
+          echo "LibrariesPath=$LibrariesPath"
+          echo "QT=$QT"
+          ls -ld "$LibrariesPath"/Qt-* || true
+          ls -l "$LibrariesPath/Qt-6.11.2/lib/cmake/Qt6/Qt6Config.cmake" || true
+          ls -l "$LibrariesPath/Qt-6.11.2/lib/cmake/Qt6Core/Qt6CoreConfig.cmake" || true
+          find "$LibrariesPath/Qt-6.11.2" -name '*.cmake' | wc -l
+          mkdir -p "$RUNNER_TEMP/qtprobe"
+          printf 'cmake_minimum_required(VERSION 3.25)\nproject(qtprobe NONE)\nfind_package(QT NAMES Qt6 COMPONENTS Core QUIET)\nmessage(STATUS "QT_FOUND=${QT_FOUND} QT_VERSION=${QT_VERSION} QT_DIR=${QT_DIR}")\n' > "$RUNNER_TEMP/qtprobe/CMakeLists.txt"
+          cmake -S "$RUNNER_TEMP/qtprobe" -B "$RUNNER_TEMP/qtprobe/out" -D CMAKE_PREFIX_PATH="$LibrariesPath/Qt-6.11.2" -D CMAKE_FIND_DEBUG_MODE=ON 2>&1 | tail -160
 
       - name: Save ThirdParty cache.
         if: steps.cache-third-party.outputs.cache-hit != 'true'
