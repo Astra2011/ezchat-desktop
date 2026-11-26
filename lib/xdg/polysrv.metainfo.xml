@@ -76,9 +76,8 @@
     <provides>
         <binary>EzChat</binary>
         <dbus type="session">im.ezchat.desktop</dbus>
-        <mediatype>x-scheme-handler/tg</mediatype>
+        <mediatype>x-scheme-handler/ez</mediatype>
         <mediatype>x-scheme-handler/tonsite</mediatype>
         <mediatype>x-scheme-handler/ton</mediatype>
-        <mediatype>x-scheme-handler/srv</mediatype>
     </provides>
 </component>
