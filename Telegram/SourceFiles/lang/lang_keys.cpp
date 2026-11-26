@@ -15,7 +15,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace {
 
-constexpr auto kDefaultLanguage = "en"_cs;
+// EzChat: default to Simplified Chinese; the language switcher stays available.
+constexpr auto kDefaultLanguage = "zh-hans"_cs;
 
 template <typename WithYear, typename WithoutYear>
 inline QString langDateMaybeWithYear(
