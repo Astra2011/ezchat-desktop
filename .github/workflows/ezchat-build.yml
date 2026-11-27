@@ -69,6 +69,10 @@ jobs:
           # Release 构建要同时编 Debug+Release 两套 Qt，实测需 65 GB 以上；
           # 之前目标 40 GB 导致 Qt 安装 wasmdeployqt.pdb 时磁盘写满失败。
           # 删光所有预设目录，不提前结束。
+          # 实测成功构建需 45 GB free、42 GB 会在 Generating Code 阶段爆盘。
+          # 预设目录删光通常只到 42~45 GB，故扩充第二批安全目录再挤几个 GB。
+          # 切勿删除构建依赖：Python(hostedtoolcache/Python)、CMake、Git、
+          # Visual Studio、Windows Kits、7-Zip。
           $targets = @(
             "C:\Android\android-sdk",
             "C:\Program Files\dotnet",
@@ -79,7 +83,27 @@ jobs:
             "C:\Program Files\LLVM",
             "C:\vcpkg",
             "$env:LOCALAPPDATA\Docker",
-            "C:\ProgramData\DockerDesktop"
+            "C:\ProgramData\DockerDesktop",
+            "C:\Windows\SoftwareDistribution\Download",
+            "C:\Program Files\Microsoft SQL Server",
+            "C:\Program Files (x86)\Microsoft SQL Server",
+            "C:\Program Files\Google",
+            "C:\Program Files (x86)\Google",
+            "C:\Program Files\Mozilla Firefox",
+            "C:\Program Files\nodejs",
+            "C:\Program Files\PostgreSQL",
+            "C:\Program Files\MySQL",
+            "C:\Program Files\Redis",
+            "C:\Program Files\MongoDB",
+            "C:\Program Files\Java",
+            "C:\Program Files (x86)\Java",
+            "C:\hostedtoolcache\windows\Java",
+            "C:\hostedtoolcache\windows\Ruby",
+            "C:\hostedtoolcache\windows\Go",
+            "C:\hostedtoolcache\windows\Node",
+            "$env:USERPROFILE\.nuget",
+            "$env:USERPROFILE\.npm",
+            "$env:USERPROFILE\.cache"
           )
           $targetGb = 65
           $reached = $false
