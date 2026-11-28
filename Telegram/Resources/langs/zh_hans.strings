@@ -221,6 +221,10 @@
 "lng_about_text2" = "本软件授权于 {gpl_link} 版本 3。\n源代码可以在 {github_link} 取得。";
 "lng_about_text3" = "访问 {faq_link} 获取更多信息。";
 "lng_about_text3_faq" = "EZChat 常见问题";
+"lng_ezchat_about_text1" = "EzChat 是一款为快速、安全而开发的免费通讯软件。";
+"lng_ezchat_about_text2" = "本软件依据 {gpl_link} 版本 3 授权。";
+"lng_ezchat_about_text3" = "访问 {faq_link} 了解更多信息。";
+"lng_ezchat_about_faq" = "EzChat 官网";
 "lng_about_text_1" = "基于 [a href=\"https://ezchat.im/api\"]EZChat API[/a] 的官方免费通讯应用，为快速和安全而生。";
 "lng_about_text_2" = "本软件基于 [a href=\"https://github.com/EZChatdesktop/tdesktop/blob/master/LICENSE\"]GNU 通用公共许可证[/a]第三版协议授权。\n源代码托管于 [a href=\"https://github.com/EZChatdesktop/tdesktop\"]GitHub[/a]。";
 "lng_about_text_3" = "更多详情请查阅 {faq_open}EZChat 常见问题{faq_close}。";

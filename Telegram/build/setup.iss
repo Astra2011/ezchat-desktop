@@ -1,7 +1,7 @@
 #define MyAppShortName "EzChat"
 #define MyAppName "EzChat"
 #define MyAppPublisher "EzChat"
-#define MyAppURL "https://github.com/Astra2011/ezchat-desktop"
+#define MyAppURL "https://home.ezchat.im"
 #define MyAppExeName "EzChat.exe"
 #define MyAppId "93E83D66-46CE-41D4-BE81-A9C57099F65B"
 #define MyOutputBasePrefix "ezchat-setup"

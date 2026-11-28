@@ -1448,7 +1448,7 @@ bool Application::openInternalUrl(const QString &url, QVariant context) {
 }
 
 QString Application::changelogLink() const {
-	return Branding::Homepage.utf16() + u"/changelog/"_q;
+	return Branding::Homepage.utf16();
 }
 
 bool Application::openCustomUrl(

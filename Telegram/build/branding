@@ -11,6 +11,6 @@ OutputBasePrefix      ezchat-setup
 UrlScheme             ez
 AppId                 93E83D66-46CE-41D4-BE81-A9C57099F65B
 Description           EzChat messenger
-Homepage              https://github.com/Astra2011/ezchat-desktop
+Homepage              https://home.ezchat.im
 RemoteDomain          https://Astra2011.github.io/ezchat-desktop
 BrandColor            09090b

@@ -5972,6 +5972,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "lng_about_text2" = "This software is licensed under {gpl_link} version 3.\nSource code is available on {github_link}.";
 "lng_about_text3" = "Visit the {faq_link} for more info.";
 "lng_about_text3_faq" = "Telegram FAQ";
+"lng_ezchat_about_text1" = "EzChat is a free messaging app built for speed and security.";
+"lng_ezchat_about_text2" = "This software is licensed under {gpl_link} version 3.";
+"lng_ezchat_about_text3" = "Visit the {faq_link} for more info.";
+"lng_ezchat_about_faq" = "EzChat website";
 "lng_about_done" = "Done";
 
 "lng_search_found_results#one" = "Found {count} message";

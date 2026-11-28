@@ -37,29 +37,23 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace {
 
 rpl::producer<TextWithEntities> Text1() {
-	return tr::lng_about_text1(
-		lt_api_link,
-		tr::lng_about_text1_api(tr::url(u"https://Astra2011.github.io/ezchat-desktop/api"_q)),
-		tr::marked);
+	// EzChat is a standalone private messenger: no "based on API" claim.
+	return tr::lng_ezchat_about_text1(tr::marked);
 }
 
 rpl::producer<TextWithEntities> Text2() {
-	return tr::lng_about_text2(
+	return tr::lng_ezchat_about_text2(
 		lt_gpl_link,
 		rpl::single(tr::link(
 			"GNU GPL",
-			"https://github.com/Astra2011/ezchat-desktop/blob/main/LICENSE")),
-		lt_github_link,
-		rpl::single(tr::link(
-			"GitHub",
-			"https://github.com/Astra2011/ezchat-desktop")),
+			"https://www.gnu.org/licenses/gpl-3.0.html")),
 		tr::marked);
 }
 
 rpl::producer<TextWithEntities> Text3() {
-	return tr::lng_about_text3(
+	return tr::lng_ezchat_about_text3(
 		lt_faq_link,
-		tr::lng_about_text3_faq(tr::url(telegramFaqLink())),
+		tr::lng_ezchat_about_faq(tr::url(telegramFaqLink())),
 		tr::marked);
 }
 
@@ -85,7 +79,7 @@ void AboutBox(not_null<Ui::GenericBox*> box) {
 			st::boxRowPadding.bottom()));
 	version->setClickedCallback([=] {
 		if (cRealAlphaVersion()) {
-			auto url = u"https://Astra2011.github.io/ezchat-desktop/"_q;
+			auto url = Branding::Homepage.utf16() + '/';
 			if (Platform::IsWindows32Bit()) {
 				url += u"win/%1.zip"_q;
 			} else if (Platform::IsWindows64Bit()) {
@@ -135,20 +129,7 @@ void AboutBox(not_null<Ui::GenericBox*> box) {
 }
 
 QString telegramFaqLink() {
-	const auto result = u"https://Astra2011.github.io/ezchat-desktop/faq"_q;
-	const auto langpacked = [&](const char *language) {
-		return result + '/' + language;
-	};
-	const auto current = Lang::Id();
-	for (const auto language : { "de", "es", "it", "ko" }) {
-		if (current.startsWith(QLatin1String(language))) {
-			return langpacked(language);
-		}
-	}
-	if (current.startsWith(u"pt-br"_q)) {
-		return langpacked("br");
-	}
-	return result;
+	return Branding::Homepage.utf16();
 }
 
 namespace {

@@ -32,7 +32,7 @@ constexpr auto OutputName = "EzChat"_cs;
 constexpr auto UrlScheme = "ez"_cs;
 
 // Where the project lives.
-constexpr auto Homepage = "https://github.com/Astra2011/ezchat-desktop"_cs;
+constexpr auto Homepage = "https://home.ezchat.im"_cs;
 
 // The domain the client fetches the server list and the update
 // manifest from.

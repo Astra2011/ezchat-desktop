@@ -14,10 +14,10 @@
         <category>InstantMessaging</category>
     </categories>
     <developer id="im.ezchat.desktop"><name>EzChat</name></developer>
-    <url type="homepage">https://github.com/Astra2011/ezchat-desktop</url>
-    <url type="bugtracker">https://github.com/Astra2011/ezchat-desktop/issues</url>
-    <url type="vcs-browser">https://github.com/Astra2011/ezchat-desktop</url>
-    <url type="contribute">https://github.com/Astra2011/ezchat-desktop/blob/dev/.github/CONTRIBUTING.md</url>
+    <url type="homepage">https://home.ezchat.im</url>
+    <url type="bugtracker">https://home.ezchat.im/issues</url>
+    <url type="vcs-browser">https://home.ezchat.im</url>
+    <url type="contribute">https://home.ezchat.im/blob/dev/.github/CONTRIBUTING.md</url>
     <branding>
         <color type="primary" scheme_preference="light">#09090b</color>
         <color type="primary" scheme_preference="dark">#09090b</color>
