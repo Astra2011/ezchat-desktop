@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/langs">
+    <file alias="zh_hans.strings">../../langs/zh_hans.strings</file>
+  </qresource>
+</RCC>

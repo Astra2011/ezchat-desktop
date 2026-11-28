@@ -57,6 +57,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "lang/lang_cloud_manager.h"
 #include "lang/lang_hardcoded.h"
 #include "lang/lang_instance.h"
+#include "lang/lang_keys.h"
 #include "inline_bots/bot_attach_web_view.h"
 #include "mainwidget.h"
 #include "tray.h"
@@ -113,6 +114,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include <QtCore/QStandardPaths>
 #include <QtCore/QMimeDatabase>
+#include <QtCore/QFile>
+#include <QtCore/QIODevice>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
@@ -978,6 +981,20 @@ void Application::badMtprotoConfigurationError(const MTP::ProxyData &proxy) {
 void Application::startLocalStorage() {
 	Ui::GL::DetectLastCheckCrash();
 	Local::start();
+
+	// EzChat: the built-in phrases are English-only, while the language
+	// switcher treats an empty language id as the default language. Load our
+	// bundled Simplified Chinese pack before any window is created, so the
+	// first frame matches the language shown in Settings. A saved explicit
+	// language choice is left untouched and keeps priority.
+	if (Lang::Id().isEmpty()) {
+		Lang::GetInstance().switchToId(Lang::DefaultLanguage());
+		QFile bundled(u":/langs/zh_hans.strings"_q);
+		if (bundled.open(QIODevice::ReadOnly)) {
+			Lang::GetInstance().loadFromBuiltInContent(bundled.readAll());
+		}
+	}
+
 	_saveSettingsTimer.emplace([=] { saveSettings(); });
 	settings().saveDelayedRequests() | rpl::on_next([=] {
 		saveSettingsDelayed();

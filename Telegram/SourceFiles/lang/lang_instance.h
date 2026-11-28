@@ -53,6 +53,10 @@ public:
 
 	void switchToId(const Language &language);
 	void switchToCustomFile(const QString &filePath);
+	void loadFromBuiltInContent(const QByteArray &content) {
+		loadFromContent(content);
+		updatePluralRules();
+	}
 
 	Instance(const Instance &other) = delete;
 	Instance &operator=(const Instance &other) = delete;

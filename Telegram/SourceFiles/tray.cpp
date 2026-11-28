@@ -108,8 +108,13 @@ void Tray::rebuildMenu() {
 			[=] { toggleSoundNotifications(); });
 	}
 
+	auto quitText = _textUpdates.events(
+	) | rpl::map([=] {
+		return tr::lng_quit_from_tray(tr::now);
+	});
+
 	_tray.addAction(
-		rpl::single(tr::lng_quit_from_tray(tr::now)),
+		std::move(quitText),
 		[] { Core::Quit(); });
 
 	TrayAccountsMenu::Fill(_tray);
