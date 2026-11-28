@@ -1359,6 +1359,11 @@ bool Application::openTelegramUrl(
 		const QString &url,
 		QVariant context,
 		bool serverRouted) {
+	// EzChat is locked to a single built-in server, so every account has a
+	// non-empty server scope and the fork's "official network" guard would
+	// reject every ez:// link here. The ez:// scheme is our own protocol,
+	// so always route it locally instead of showing that misleading box.
+	(void)serverRouted;
 	const auto protocol = u"ez://"_q;
 	if (url.startsWith(protocol, Qt::CaseInsensitive)
 		&& !passcodeLocked()) {
@@ -1369,16 +1374,6 @@ bool Application::openTelegramUrl(
 			: _lastActivePrimaryWindow
 			? _lastActivePrimaryWindow->sessionController()
 			: nullptr;
-		if (controller && !serverRouted) {
-			const auto &account = controller->session().account();
-			if (!account.serverScope().isEmpty()) {
-				// A tg link belongs to the official Telegram network,
-				// so it cannot be routed on another server.
-				Ui::show(Ui::MakeInformBox(
-					tr::lng_polysrv_tg_link_needs_telegram()));
-				return true;
-			}
-		}
 		if (TryRouterForLocalUrl(controller, command)) {
 			return true;
 		}
